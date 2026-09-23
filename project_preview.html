@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Customer Shopping Behavior — Project Preview</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; background: #f0f2f5; color: #1f2328; font-size: 14px; line-height: 1.6; }
+  nav { background: #1e2761; color: #fff; padding: 0 24px; display: flex; align-items: center; gap: 8px; height: 52px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.3); flex-wrap: wrap; }
+  nav .logo { font-size: 15px; font-weight: 700; }
+  nav .badge { font-size: 11px; background: rgba(255,255,255,.15); padding: 2px 8px; border-radius: 20px; }
+  .tab-bar { display: flex; gap: 4px; margin-left: auto; }
+  .tab { cursor: pointer; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; color: rgba(255,255,255,.7); transition: all .15s; user-select: none; }
+  .tab:hover, .tab.active { background: rgba(255,255,255,.2); color: #fff; }
+  .panel { display: none; padding: 28px 24px; max-width: 1100px; margin: 0 auto; }
+  .panel.active { display: block; }
+  .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: #fff; border-radius: 10px; padding: 20px; border-left: 4px solid var(--c); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .stat-card .val { font-size: 28px; font-weight: 700; color: var(--c); }
+  .stat-card .lbl { font-size: 12px; color: #57606a; margin-top: 2px; }
+  .stat-card .sub { font-size: 11px; color: #8b949e; margin-top: 4px; }
+  h2 { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+  h3 { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .three-col { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 24px; }
+  .card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13px; }
+  .bar-row .label { width: 130px; text-align: right; color: #57606a; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { flex: 1; background: #f0f2f5; border-radius: 4px; height: 22px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 12px; font-weight: 600; color: #fff; }
+  .bar-row .amt { width: 52px; font-size: 12px; font-weight: 600; }
+  .donut-wrap { display: flex; align-items: center; gap: 20px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-bottom: 6px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  /* Slide deck */
+  .slide-nav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .slide-btn { cursor: pointer; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; border: 1.5px solid #d0d7de; background: #fff; color: #57606a; transition: all .15s; user-select: none; }
+  .slide-btn:hover, .slide-btn.active { border-color: #1e2761; background: #1e2761; color: #fff; }
+  .slide-display { display: none; }
+  .slide-display.active { display: block; }
+  .slide { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,.12); }
+  .slide-hero { background: linear-gradient(135deg, #1e2761, #3b5dc9); color: #fff; padding: 60px 48px; }
+  .slide-hero h1 { font-size: 28px; font-weight: 800; margin-bottom: 10px; }
+  .slide-hero p { font-size: 15px; opacity: .8; }
+  .slide-body { background: #fff; padding: 32px 40px; }
+  .slide-title { font-size: 22px; font-weight: 700; margin-bottom: 20px; color: #1e2761; border-bottom: 3px solid #f2c811; padding-bottom: 8px; display: inline-block; }
+  .ov-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+  .ov-card { text-align: center; padding: 24px 16px; border-radius: 8px; background: #f7f8fa; }
+  .ov-card .num { font-size: 40px; font-weight: 800; color: #1e2761; }
+  .ov-card .desc { font-size: 12px; color: #57606a; margin-top: 4px; font-weight: 600; }
+  .ov-card .sub2 { font-size: 11px; color: #8b949e; margin-top: 2px; }
+  .pipeline { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 8px; }
+  .pipe-step { flex: 1; min-width: 130px; padding: 14px 10px; background: #f7f8fa; border: 2px solid #e5e7eb; border-radius: 8px; text-align: center; }
+  .pipe-step .num2 { font-size: 11px; font-weight: 800; color: #1e2761; background: #dce6f9; border-radius: 20px; padding: 1px 7px; display: inline-block; margin-bottom: 6px; }
+  .pipe-step h4 { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+  .pipe-step p { font-size: 11px; color: #57606a; }
+  .pipe-arrow { flex-shrink: 0; width: 24px; text-align: center; font-size: 18px; color: #b88e23; font-weight: 700; }
+  .insight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .insight-card { border-radius: 8px; padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
+  .insight-card h4 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .insight-card p { font-size: 12px; color: #57606a; }
+  .seg-row { display: flex; gap: 16px; }
+  .seg-circle { flex: 1; text-align: center; padding: 20px 12px; border-radius: 10px; }
+  .seg-pct { font-size: 32px; font-weight: 800; }
+  .seg-name { font-size: 13px; font-weight: 700; margin-top: 4px; }
+  .seg-rule { font-size: 11px; color: #57606a; margin-top: 2px; }
+  .rec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .rec-card { padding: 16px; border-radius: 8px; border-left: 4px solid var(--c); background: var(--bg); }
+  .rec-card h4 { font-size: 13px; font-weight: 700; margin-bottom: 4px; color: var(--c); }
+  .rec-card p { font-size: 12px; color: #57606a; }
+  /* SQL */
+  .sql-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .sql-tab { cursor: pointer; padding: 5px 12px; border-radius: 5px; font-size: 12px; font-weight: 600; border: 1.5px solid #d0d7de; background: #fff; color: #57606a; transition: all .15s; user-select: none; }
+  .sql-tab:hover, .sql-tab.active { border-color: #ed7d31; background: #ed7d31; color: #fff; }
+  .sql-display { display: none; }
+  .sql-display.active { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  pre { background: #0d1117; color: #c9d1d9; border-radius: 8px; padding: 16px; font-size: 12px; line-height: 1.7; overflow-x: auto; font-family: "Cascadia Code","Fira Code",monospace; white-space: pre-wrap; }
+  .kw { color: #ff7b72; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #8b949e; font-style: italic; }
+  .result-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .result-table th { background: #f7f8fa; padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e5e7eb; color: #1e2761; }
+  .result-table td { padding: 8px 12px; border-bottom: 1px solid #f0f2f5; }
+  .result-table tr:last-child td { border-bottom: none; }
+  .result-table tr:hover td { background: #f7f8fa; }
+  /* Data table */
+  .data-table-wrap { overflow-x: auto; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  table.data-tbl { width: 100%; border-collapse: collapse; background: #fff; font-size: 12px; white-space: nowrap; }
+  table.data-tbl thead th { background: #1e2761; color: #fff; padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: .4px; }
+  table.data-tbl tbody tr:nth-child(even) td { background: #f7f8fa; }
+  table.data-tbl tbody td { padding: 8px 14px; border-bottom: 1px solid #e5e7eb; }
+  footer { text-align: center; padding: 24px; font-size: 12px; color: #8b949e; border-top: 1px solid #e5e7eb; margin-top: 32px; background: #fff; }
+  @media(max-width:700px) {
+    .stat-grid,.three-col { grid-template-columns: 1fr 1fr; }
+    .two-col,.insight-grid,.rec-grid,.sql-display { grid-template-columns: 1fr; }
+    .seg-row { flex-direction: column; }
+    nav .tab-bar { gap: 2px; }
+    .tab { padding: 5px 8px; font-size: 11px; }
+    .slide-body { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">&#128202; Customer Shopping Behavior Analysis</span>
+  <span class="badge">3,900 records &middot; 18 columns</span>
+  <div class="tab-bar">
+    <div class="tab active" onclick="showPanel('overview',this)">Overview</div>
+    <div class="tab" onclick="showPanel('slides',this)">Slides</div>
+    <div class="tab" onclick="showPanel('charts',this)">Charts</div>
+    <div class="tab" onclick="showPanel('sql',this)">SQL</div>
+    <div class="tab" onclick="showPanel('data',this)">Dataset</div>
+  </div>
+</nav>
+
+<!-- ══════════════ OVERVIEW ══════════════ -->
+<div id="panel-overview" class="panel active">
+  <div class="stat-grid">
+    <div class="stat-card" style="--c:#1e2761"><div class="val">3,900</div><div class="lbl">Total Purchases</div><div class="sub">Retail transaction records</div></div>
+    <div class="stat-card" style="--c:#70ad47"><div class="val">18</div><div class="lbl">Data Columns</div><div class="sub">Demographics &amp; behavior</div></div>
+    <div class="stat-card" style="--c:#ed7d31"><div class="val">37</div><div class="lbl">Missing Values</div><div class="sub">Only in Review Rating</div></div>
+    <div class="stat-card" style="--c:#b88800"><div class="val">$59.76</div><div class="lbl">Avg Purchase Amount</div><div class="sub">Range: $20 &ndash; $100</div></div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Dataset Schema</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;margin-top:8px;">
+        <div style="padding:6px 8px;background:#f7f8fa;border-radius:5px;"><strong>Customer ID</strong> <span style="color:#57606a">&middot; Integer</span></div>
+        <div style="padding:6px 8px;background:#f7f8fa;border-radius:5px;"><strong>Age</strong> <span style="color:#57606a">&middot; 18&ndash;70 yrs</span></div>
+        <div style="padding:6px 8px;background:#f7f8fa;border-radius:5px;"><strong>Gender</strong> <span style="color:#57606a">&middot; 2 values</span></div>
+        <div style="padding:6px 8px;background:#f7f8fa;border-radius:5px;"><strong>Item Purchased</strong> <span style="color:#57606a">&middot; 25 products</span></div>
+        <div style="padding:6px 8px;background:#f7f8fa;border-radius:5px;"><strong>Category</strong> <span style="color:#57606a">&middot; 4 categories</span></div>
+        <div style="padding:6px 8px;background:#f7f8fa;border-radius:5px;"><strong>Purchase Amount</strong> <span style="color:#57606a">&middot; USD</span></div>
+        <div style="padding:6px 8px;background:#f7f8fa;border-radius:5px;"><strong>Location</strong> <span style="color:#57606a">&middot; 50 US states</span></div>
+        <div style="padding:6px 8px;background:#f7f8fa;border-radius:5px;"><strong>Review Rating</strong> <span style="color:#57606a">&middot; 2.5&ndash;5.0</span></div>
+        <div style="padding:6px 8px;background:#f7f8fa;border-radius:5px;"><strong>Subscription</strong> <span style="color:#57606a">&middot; Yes / No</span></div>
+        <div style="padding:6px 8px;background:#f7f8fa;border-radius:5px;"><strong>Shipping Type</strong> <span style="color:#57606a">&middot; 6 methods</span></div>
+        <div style="padding:6px 8px;background:#f7f8fa;border-radius:5px;"><strong>Discount Applied</strong> <span style="color:#57606a">&middot; Yes / No</span></div>
+        <div style="padding:6px 8px;background:#f7f8fa;border-radius:5px;"><strong>Previous Purchases</strong> <span style="color:#57606a">&middot; 1&ndash;50</span></div>
+        <div style="padding:6px 8px;background:#f7f8fa;border-radius:5px;"><strong>Payment Method</strong> <span style="color:#57606a">&middot; 6 methods</span></div>
+        <div style="padding:6px 8px;background:#f7f8fa;border-radius:5px;"><strong>Freq. of Purchases</strong> <span style="color:#57606a">&middot; 7 buckets</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Project Phases</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:#eef2fb;border-radius:8px;border-left:4px solid #1e2761;">
+          <div style="font-size:20px">&#128013;</div>
+          <div><strong style="font-size:13px;">Phase 1 &mdash; Python</strong><br><span style="font-size:12px;color:#57606a">EDA, cleaning, feature engineering, load to PostgreSQL</span></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:#fff3e8;border-radius:8px;border-left:4px solid #ed7d31;">
+          <div style="font-size:20px">&#128452;&#65039;</div>
+          <div><strong style="font-size:13px;">Phase 2 &mdash; SQL</strong><br><span style="font-size:12px;color:#57606a">10 business queries: CTEs, window functions, aggregations</span></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:#fffbe6;border-radius:8px;border-left:4px solid #f2c811;">
+          <div style="font-size:20px">&#128202;</div>
+          <div><strong style="font-size:13px;">Phase 3 &mdash; Power BI</strong><br><span style="font-size:12px;color:#57606a">Interactive dashboard with drill-downs and DAX measures</span></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:#f0ebff;border-radius:8px;border-left:4px solid #7c5cd8;">
+          <div style="font-size:20px">&#128209;</div>
+          <div><strong style="font-size:13px;">Phase 4 &mdash; Report &amp; Deck</strong><br><span style="font-size:12px;color:#57606a">PDF report + AI-generated presentation (Gamma AI)</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Key Findings at a Glance</h3>
+    <div class="three-col" style="margin-top:12px;margin-bottom:0;">
+      <div style="padding:14px;background:#f7f8fa;border-radius:8px;text-align:center;">
+        <div style="font-size:22px;font-weight:800;color:#1e2761;">$65</div>
+        <div style="font-size:12px;color:#57606a;margin-top:2px;">Express shipping avg spend</div>
+        <div style="font-size:11px;color:#70ad47;font-weight:600;">vs $58 Standard (+12%)</div>
+      </div>
+      <div style="padding:14px;background:#f7f8fa;border-radius:8px;text-align:center;">
+        <div style="font-size:22px;font-weight:800;color:#ed7d31;">45%</div>
+        <div style="font-size:12px;color:#57606a;margin-top:2px;">Revenue from subscribers</div>
+        <div style="font-size:11px;color:#70ad47;font-weight:600;">68% higher avg spend</div>
+      </div>
+      <div style="padding:14px;background:#f7f8fa;border-radius:8px;text-align:center;">
+        <div style="font-size:22px;font-weight:800;color:#7c5cd8;">50%</div>
+        <div style="font-size:12px;color:#57606a;margin-top:2px;">New customers (1 purchase)</div>
+        <div style="font-size:11px;color:#b88800;font-weight:600;">Key conversion opportunity</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SLIDES ══════════════ -->
+<div id="panel-slides" class="panel">
+  <div class="slide-nav">
+    <div class="slide-btn active" onclick="showSlide(0,this)">1 &middot; Title</div>
+    <div class="slide-btn" onclick="showSlide(1,this)">2 &middot; Dataset</div>
+    <div class="slide-btn" onclick="showSlide(2,this)">3 &middot; Pipeline</div>
+    <div class="slide-btn" onclick="showSlide(3,this)">4 &middot; Gender</div>
+    <div class="slide-btn" onclick="showSlide(4,this)">5 &middot; Discounts</div>
+    <div class="slide-btn" onclick="showSlide(5,this)">6 &middot; Ratings</div>
+    <div class="slide-btn" onclick="showSlide(6,this)">7 &middot; Shipping</div>
+    <div class="slide-btn" onclick="showSlide(7,this)">8 &middot; Subscriptions</div>
+    <div class="slide-btn" onclick="showSlide(8,this)">9 &middot; Segments</div>
+    <div class="slide-btn" onclick="showSlide(9,this)">10 &middot; Recommendations</div>
+  </div>
+  <div class="slide-display active"><div class="slide"><div class="slide-hero">
+    <h1>Customer Shopping Behavior Analysis</h1>
+    <p>Uncovering insights from 3,900 purchases to guide strategic business decisions</p>
+    <div style="margin-top:30px;display:flex;gap:12px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.15);padding:4px 12px;border-radius:20px;font-size:12px;">&#128013; Python</span>
+      <span style="background:rgba(255,255,255,.15);padding:4px 12px;border-radius:20px;font-size:12px;">&#128452;&#65039; SQL</span>
+      <span style="background:rgba(255,255,255,.15);padding:4px 12px;border-radius:20px;font-size:12px;">&#128202; Power BI</span>
+    </div>
+  </div></div></div>
+  <div class="slide-display"><div class="slide"><div class="slide-body">
+    <div class="slide-title">Dataset Overview</div>
+    <div class="ov-grid">
+      <div class="ov-card"><div class="num">3,900</div><div class="desc">Total Purchases</div><div class="sub2">Comprehensive transaction data</div></div>
+      <div class="ov-card"><div class="num">18</div><div class="desc">Data Columns</div><div class="sub2">Customer demographics &amp; behavior</div></div>
+      <div class="ov-card"><div class="num">37</div><div class="desc">Missing Values</div><div class="sub2">Only in Review Rating column</div></div>
+    </div>
+    <div style="margin-top:16px;padding:12px;background:#eef2fb;border-radius:8px;font-size:12px;color:#1e2761;">
+      <strong>Key stats:</strong> Age range 18&ndash;70 (avg 44) &middot; Purchase $20&ndash;$100 (avg $59.76) &middot; Prev. purchases 1&ndash;50 (avg 25) &middot; Avg rating 3.75/5
+    </div>
+  </div></div></div>
+  <div class="slide-display"><div class="slide"><div class="slide-body">
+    <div class="slide-title">Data Preparation Process</div>
+    <div class="pipeline">
+      <div class="pipe-step"><div class="num2">01</div><h4>Data Loading</h4><p>Imported with pandas</p></div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step"><div class="num2">02</div><h4>Initial Exploration</h4><p>Structure &amp; stats</p></div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step"><div class="num2">03</div><h4>Missing Data</h4><p>Imputed median rating</p></div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step"><div class="num2">04</div><h4>Feature Engineering</h4><p>Age groups &amp; freq</p></div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step"><div class="num2">05</div><h4>DB Integration</h4><p>PostgreSQL via SQLAlchemy</p></div>
+    </div>
+  </div></div></div>
+  <div class="slide-display"><div class="slide"><div class="slide-body">
+    <div class="slide-title">Revenue by Gender Analysis</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+      <div style="text-align:center;padding:28px;background:#eef2fb;border-radius:10px;">
+        <div style="font-size:14px;font-weight:700;color:#1e2761;margin-bottom:4px;">&#9794; Male</div>
+        <div style="font-size:36px;font-weight:800;color:#1e2761;">$134,800</div>
+        <div style="font-size:12px;color:#57606a;margin-top:4px;">2,652 customers (68%)</div>
+      </div>
+      <div style="text-align:center;padding:28px;background:#fff0f5;border-radius:10px;">
+        <div style="font-size:14px;font-weight:700;color:#c73b7a;margin-bottom:4px;">&#9792; Female</div>
+        <div style="font-size:36px;font-weight:800;color:#c73b7a;">$98,900</div>
+        <div style="font-size:12px;color:#57606a;margin-top:4px;">1,248 customers (32%)</div>
+      </div>
+    </div>
+    <div style="margin-top:16px;padding:12px;background:#fffbe6;border-radius:8px;border-left:3px solid #f2c811;font-size:12px;">
+      <strong>Key Insight:</strong> Female customers generate slightly higher average revenue per transaction despite being a smaller segment.
+    </div>
+  </div></div></div>
+  <div class="slide-display"><div class="slide"><div class="slide-body">
+    <div class="slide-title">High-Value Discount Users</div>
+    <div class="insight-grid">
+      <div class="insight-card" style="background:#eef2fb;">
+        <div style="font-size:24px">&#128717;</div>
+        <div><h4>Smart Shoppers</h4><p>Customers who applied a discount but still spent above the $59.76 average &mdash; the highest-value segment for targeted premium offers.</p></div>
+      </div>
+      <div class="insight-card" style="background:#fff3e8;">
+        <div style="font-size:24px">&#127919;</div>
+        <div><h4>Strategic Opportunity</h4><p>Target these premium customers with exclusive offers and loyalty perks &mdash; they show willingness to spend even with discounts applied.</p></div>
+      </div>
+    </div>
+    <div style="margin-top:14px;padding:12px;background:#f7f8fa;border-radius:8px;font-size:12px;color:#57606a;">
+      SQL: <code style="background:#e5e7eb;padding:2px 5px;border-radius:3px;">WHERE discount_applied = 'Yes' AND purchase_amount &gt;= (SELECT AVG(purchase_amount) FROM customer)</code>
+    </div>
+  </div></div></div>
+  <div class="slide-display"><div class="slide"><div class="slide-body">
+    <div class="slide-title">Top-Rated Products</div>
+    <div class="bar-row" style="margin-top:12px;"><span class="label">Blouse</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:#1e2761;">5.0 &#9733;</div></div><span class="amt">5.0/5</span></div>
+    <div class="bar-row"><span class="label">Dress</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:#1e2761;">5.0 &#9733;</div></div><span class="amt">5.0/5</span></div>
+    <div class="bar-row"><span class="label">Shirt</span><div class="bar-track"><div class="bar-fill" style="width:80%;background:#3b5dc9;">4.0 &#9733;</div></div><span class="amt">4.0/5</span></div>
+    <div class="bar-row"><span class="label">Sandals</span><div class="bar-track"><div class="bar-fill" style="width:76%;background:#5b78d5;">3.8 &#9733;</div></div><span class="amt">3.8/5</span></div>
+    <div class="bar-row"><span class="label">Jeans</span><div class="bar-track"><div class="bar-fill" style="width:74%;background:#7b96df;">3.7 &#9733;</div></div><span class="amt">3.7/5</span></div>
+  </div></div></div>
+  <div class="slide-display"><div class="slide"><div class="slide-body">
+    <div class="slide-title">Shipping Preferences Impact</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px;">
+      <div style="text-align:center;padding:28px;background:#eef2fb;border-radius:10px;">
+        <div style="font-size:14px;font-weight:700;color:#1e2761;">&#9889; Express Shipping</div>
+        <div style="font-size:40px;font-weight:800;color:#1e2761;margin:8px 0;">$65</div>
+        <div style="font-size:12px;color:#57606a;">Average purchase amount</div>
+      </div>
+      <div style="text-align:center;padding:28px;background:#f7f8fa;border-radius:10px;">
+        <div style="font-size:14px;font-weight:700;color:#57606a;">&#128230; Standard Shipping</div>
+        <div style="font-size:40px;font-weight:800;color:#57606a;margin:8px 0;">$58</div>
+        <div style="font-size:12px;color:#57606a;">Average purchase amount</div>
+      </div>
+    </div>
+    <div style="padding:12px;background:#e8f5e9;border-radius:8px;border-left:3px solid #70ad47;font-size:13px;font-weight:600;color:#2e7d32;">
+      &#9650; Express shipping customers spend 12% more per transaction
+    </div>
+  </div></div></div>
+  <div class="slide-display"><div class="slide"><div class="slide-body">
+    <div class="slide-title">Subscription Impact</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+      <div style="text-align:center;padding:20px;background:#eef2fb;border-radius:8px;">
+        <div style="font-size:32px;font-weight:800;color:#1e2761;">68%</div>
+        <div style="font-size:12px;color:#57606a;margin-top:4px;">Higher Spend</div>
+        <div style="font-size:11px;color:#8b949e;">Subscribers vs non-subscribers</div>
+      </div>
+      <div style="text-align:center;padding:20px;background:#fff3e8;border-radius:8px;">
+        <div style="font-size:32px;font-weight:800;color:#ed7d31;">45%</div>
+        <div style="font-size:12px;color:#57606a;margin-top:4px;">Revenue Share</div>
+        <div style="font-size:11px;color:#8b949e;">From subscription customers</div>
+      </div>
+      <div style="text-align:center;padding:20px;background:#f0ebff;border-radius:8px;">
+        <div style="font-size:32px;font-weight:800;color:#7c5cd8;">78%</div>
+        <div style="font-size:12px;color:#57606a;margin-top:4px;">Loyalty Rate</div>
+        <div style="font-size:11px;color:#8b949e;">Repeat purchase frequency</div>
+      </div>
+    </div>
+  </div></div></div>
+  <div class="slide-display"><div class="slide"><div class="slide-body">
+    <div class="slide-title">Customer Segmentation</div>
+    <div class="seg-row">
+      <div class="seg-circle" style="background:#eef2fb;"><div class="seg-pct" style="color:#1e2761;">50%</div><div class="seg-name" style="color:#1e2761;">New</div><div class="seg-rule">1 previous purchase</div></div>
+      <div class="seg-circle" style="background:#fff3e8;"><div class="seg-pct" style="color:#ed7d31;">35%</div><div class="seg-name" style="color:#ed7d31;">Returning</div><div class="seg-rule">2&ndash;10 purchases</div></div>
+      <div class="seg-circle" style="background:#e8f5e9;"><div class="seg-pct" style="color:#388e3c;">15%</div><div class="seg-name" style="color:#388e3c;">Loyal</div><div class="seg-rule">&gt; 10 purchases</div></div>
+    </div>
+    <div style="margin-top:16px;padding:12px;background:#fffbe6;border-radius:8px;border-left:3px solid #f2c811;font-size:12px;color:#57606a;">
+      <strong style="color:#1f2328;">Focus:</strong> Converting New &rarr; Returning and Returning &rarr; Loyal is the highest-leverage growth lever.
+    </div>
+  </div></div></div>
+  <div class="slide-display"><div class="slide"><div class="slide-body">
+    <div class="slide-title">Strategic Recommendations</div>
+    <div class="rec-grid">
+      <div class="rec-card" style="--c:#1e2761;--bg:#eef2fb;"><h4>&#128276; Boost Subscriptions</h4><p>Promote exclusive benefits for subscribers &mdash; they spend 68% more and show 78% loyalty rate.</p></div>
+      <div class="rec-card" style="--c:#70ad47;--bg:#e8f5e9;"><h4>&#127942; Loyalty Programs</h4><p>Reward repeat buyers to increase retention. Focus on converting the 50% new customer base.</p></div>
+      <div class="rec-card" style="--c:#ed7d31;--bg:#fff3e8;"><h4>&#127919; Targeted Marketing</h4><p>Focus campaigns on high-revenue segments and express shipping users (+12% avg spend).</p></div>
+      <div class="rec-card" style="--c:#7c5cd8;--bg:#f0ebff;"><h4>&#11088; Product Positioning</h4><p>Highlight top-rated products (Blouse 5.0&#9733;, Dress 5.0&#9733;) prominently in all channels.</p></div>
+    </div>
+  </div></div></div>
+</div>
+
+<!-- ══════════════ CHARTS ══════════════ -->
+<div id="panel-charts" class="panel">
+  <div class="two-col" style="margin-bottom:20px;">
+    <div class="card"><h3>Revenue by Gender</h3>
+      <div class="bar-row" style="margin-top:12px;"><span class="label">Male (2,652)</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:#1e2761;">$134,800</div></div><span class="amt">$134k</span></div>
+      <div class="bar-row"><span class="label">Female (1,248)</span><div class="bar-track"><div class="bar-fill" style="width:73%;background:#c73b7a;">$98,900</div></div><span class="amt">$98.9k</span></div>
+    </div>
+    <div class="card"><h3>Shipping Type vs Avg Spend</h3>
+      <div class="bar-row" style="margin-top:12px;"><span class="label">Express</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:#1e2761;">$65</div></div><span class="amt">$65</span></div>
+      <div class="bar-row"><span class="label">Next Day Air</span><div class="bar-track"><div class="bar-fill" style="width:94%;background:#3b5dc9;">$61</div></div><span class="amt">$61</span></div>
+      <div class="bar-row"><span class="label">2-Day Shipping</span><div class="bar-track"><div class="bar-fill" style="width:89%;background:#5b78d5;">$58</div></div><span class="amt">$58</span></div>
+      <div class="bar-row"><span class="label">Standard</span><div class="bar-track"><div class="bar-fill" style="width:89%;background:#7b96df;">$58</div></div><span class="amt">$58</span></div>
+      <div class="bar-row"><span class="label">Free Shipping</span><div class="bar-track"><div class="bar-fill" style="width:85%;background:#9bb4e9;">$55</div></div><span class="amt">$55</span></div>
+    </div>
+  </div>
+  <div class="two-col" style="margin-bottom:20px;">
+    <div class="card"><h3>Customer Segments</h3>
+      <div class="donut-wrap" style="margin-top:12px;">
+        <svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="46" fill="none" stroke="#1e2761" stroke-width="22" stroke-dasharray="144.5 144.5" stroke-dashoffset="0" transform="rotate(-90 60 60)"/>
+          <circle cx="60" cy="60" r="46" fill="none" stroke="#ed7d31" stroke-width="22" stroke-dasharray="101.1 187.9" stroke-dashoffset="-144.5" transform="rotate(-90 60 60)"/>
+          <circle cx="60" cy="60" r="46" fill="none" stroke="#70ad47" stroke-width="22" stroke-dasharray="43.4 245.6" stroke-dashoffset="-245.6" transform="rotate(-90 60 60)"/>
+          <text x="60" y="56" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328">3,900</text>
+          <text x="60" y="70" text-anchor="middle" font-size="9" fill="#57606a">customers</text>
+        </svg>
+        <div>
+          <div class="legend-item"><div class="legend-dot" style="background:#1e2761"></div><strong>50%</strong>&nbsp;New (1 purchase)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#ed7d31"></div><strong>35%</strong>&nbsp;Returning (2&ndash;10)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#70ad47"></div><strong>15%</strong>&nbsp;Loyal (&gt;10)</div>
+        </div>
+      </div>
+    </div>
+    <div class="card"><h3>Subscription Impact on Revenue</h3>
+      <div style="margin-top:12px;">
+        <div class="bar-row"><span class="label">Subscribed (avg)</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:#1e2761;">$74</div></div><span class="amt">$74</span></div>
+        <div class="bar-row"><span class="label">Not Subscribed</span><div class="bar-track"><div class="bar-fill" style="width:59%;background:#d0d7de;color:#444;">$44</div></div><span class="amt">$44</span></div>
+      </div>
+      <div style="margin-top:12px;">
+        <div class="bar-row"><span class="label">Subscribed (rev%)</span><div class="bar-track"><div class="bar-fill" style="width:45%;background:#70ad47;">45%</div></div><span class="amt">45%</span></div>
+        <div class="bar-row"><span class="label">Not Subscribed</span><div class="bar-track"><div class="bar-fill" style="width:55%;background:#d0d7de;color:#444;">55%</div></div><span class="amt">55%</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="card"><h3>Revenue by Season</h3>
+      <div class="bar-row" style="margin-top:12px;"><span class="label">Spring</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:#70ad47;">$59,706</div></div><span class="amt">$59.7k</span></div>
+      <div class="bar-row"><span class="label">Fall</span><div class="bar-track"><div class="bar-fill" style="width:99%;background:#ed7d31;">$59,125</div></div><span class="amt">$59.1k</span></div>
+      <div class="bar-row"><span class="label">Winter</span><div class="bar-track"><div class="bar-fill" style="width:97%;background:#3b5dc9;">$57,990</div></div><span class="amt">$58.0k</span></div>
+      <div class="bar-row"><span class="label">Summer</span><div class="bar-track"><div class="bar-fill" style="width:94%;background:#f2c811;color:#333;">$56,050</div></div><span class="amt">$56.1k</span></div>
+    </div>
+    <div class="card"><h3>Top Products by Purchase Count</h3>
+      <div class="bar-row" style="margin-top:12px;"><span class="label">Blouse</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:#1e2761;">171</div></div><span class="amt">171</span></div>
+      <div class="bar-row"><span class="label">Jewelry</span><div class="bar-track"><div class="bar-fill" style="width:95%;background:#3b5dc9;">163</div></div><span class="amt">163</span></div>
+      <div class="bar-row"><span class="label">Pants</span><div class="bar-track"><div class="bar-fill" style="width:94%;background:#5b78d5;">160</div></div><span class="amt">160</span></div>
+      <div class="bar-row"><span class="label">Shirt</span><div class="bar-track"><div class="bar-fill" style="width:92%;background:#7b96df;">158</div></div><span class="amt">158</span></div>
+      <div class="bar-row"><span class="label">Dress</span><div class="bar-track"><div class="bar-fill" style="width:91%;background:#9bb4e9;">155</div></div><span class="amt">155</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SQL ══════════════ -->
+<div id="panel-sql" class="panel">
+  <h2>SQL Business Queries</h2>
+  <div class="sql-tabs">
+    <div class="sql-tab active" onclick="showSQL(0,this)">Q1 Revenue/Gender</div>
+    <div class="sql-tab" onclick="showSQL(1,this)">Q2 High-Value Discounters</div>
+    <div class="sql-tab" onclick="showSQL(2,this)">Q3 Top Ratings</div>
+    <div class="sql-tab" onclick="showSQL(3,this)">Q5 Subscriptions</div>
+    <div class="sql-tab" onclick="showSQL(4,this)">Q7 Segmentation (CTE)</div>
+    <div class="sql-tab" onclick="showSQL(5,this)">Q8 Top Products (Window Fn)</div>
+  </div>
+  <div class="sql-display active">
+    <div class="card"><pre><span class="cm">-- Q1. Total revenue by gender</span>
+<span class="kw">SELECT</span> gender,
+       <span class="fn">SUM</span>(purchase_amount) <span class="kw">AS</span> revenue
+<span class="kw">FROM</span> customer
+<span class="kw">GROUP BY</span> gender;</pre></div>
+    <div class="card"><h3>Result</h3><table class="result-table"><thead><tr><th>gender</th><th>revenue</th></tr></thead><tbody><tr><td>Male</td><td>$134,800</td></tr><tr><td>Female</td><td>$98,900</td></tr></tbody></table></div>
+  </div>
+  <div class="sql-display">
+    <div class="card"><pre><span class="cm">-- Q2. Discount users above avg spend</span>
+<span class="kw">SELECT</span> customer_id, purchase_amount
+<span class="kw">FROM</span> customer
+<span class="kw">WHERE</span> discount_applied = <span class="str">'Yes'</span>
+  <span class="kw">AND</span> purchase_amount &gt;= (
+    <span class="kw">SELECT</span> <span class="fn">AVG</span>(purchase_amount)
+    <span class="kw">FROM</span> customer
+  );</pre></div>
+    <div class="card"><h3>Result (sample)</h3><table class="result-table"><thead><tr><th>customer_id</th><th>purchase_amount</th></tr></thead><tbody><tr><td>3</td><td>$73</td></tr><tr><td>7</td><td>$85</td></tr><tr><td>12</td><td>$91</td></tr><tr><td colspan="2" style="color:#57606a;text-align:center;">... all above-avg discount users</td></tr></tbody></table></div>
+  </div>
+  <div class="sql-display">
+    <div class="card"><pre><span class="cm">-- Q3. Top 5 products by avg rating</span>
+<span class="kw">SELECT</span> item_purchased,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(review_rating::numeric),2)
+    <span class="kw">AS</span> <span class="str">"Average Product Rating"</span>
+<span class="kw">FROM</span> customer
+<span class="kw">GROUP BY</span> item_purchased
+<span class="kw">ORDER BY</span> <span class="fn">AVG</span>(review_rating) <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> 5;</pre></div>
+    <div class="card"><h3>Result</h3><table class="result-table"><thead><tr><th>item_purchased</th><th>Avg Rating</th></tr></thead><tbody><tr><td>Blouse</td><td>5.00</td></tr><tr><td>Dress</td><td>5.00</td></tr><tr><td>Shirt</td><td>4.00</td></tr><tr><td>Sandals</td><td>3.80</td></tr><tr><td>Jeans</td><td>3.70</td></tr></tbody></table></div>
+  </div>
+  <div class="sql-display">
+    <div class="card"><pre><span class="cm">-- Q5. Do subscribers spend more?</span>
+<span class="kw">SELECT</span> subscription_status,
+  <span class="fn">COUNT</span>(customer_id) <span class="kw">AS</span> total_customers,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(purchase_amount),2)
+    <span class="kw">AS</span> avg_spend,
+  <span class="fn">ROUND</span>(<span class="fn">SUM</span>(purchase_amount),2)
+    <span class="kw">AS</span> total_revenue
+<span class="kw">FROM</span> customer
+<span class="kw">GROUP BY</span> subscription_status
+<span class="kw">ORDER BY</span> total_revenue, avg_spend <span class="kw">DESC</span>;</pre></div>
+    <div class="card"><h3>Result</h3><table class="result-table"><thead><tr><th>status</th><th>customers</th><th>avg_spend</th><th>total_rev</th></tr></thead><tbody><tr><td>Yes</td><td>1,053</td><td>$74.00</td><td>$107,900</td></tr><tr><td>No</td><td>2,847</td><td>$44.00</td><td>$125,800</td></tr></tbody></table></div>
+  </div>
+  <div class="sql-display">
+    <div class="card"><pre><span class="cm">-- Q7. Segment via CTE + CASE</span>
+<span class="kw">WITH</span> customer_type <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> customer_id, previous_purchases,
+    <span class="kw">CASE</span>
+      <span class="kw">WHEN</span> previous_purchases = 1
+        <span class="kw">THEN</span> <span class="str">'New'</span>
+      <span class="kw">WHEN</span> previous_purchases
+        <span class="kw">BETWEEN</span> 2 <span class="kw">AND</span> 10
+        <span class="kw">THEN</span> <span class="str">'Returning'</span>
+      <span class="kw">ELSE</span> <span class="str">'Loyal'</span>
+    <span class="kw">END AS</span> customer_segment
+  <span class="kw">FROM</span> customer
+)
+<span class="kw">SELECT</span> customer_segment,
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> <span class="str">"Number of Customers"</span>
+<span class="kw">FROM</span> customer_type
+<span class="kw">GROUP BY</span> customer_segment;</pre></div>
+    <div class="card"><h3>Result</h3><table class="result-table"><thead><tr><th>customer_segment</th><th>Count</th></tr></thead><tbody><tr><td>New</td><td>1,950</td></tr><tr><td>Returning</td><td>1,365</td></tr><tr><td>Loyal</td><td>585</td></tr></tbody></table></div>
+  </div>
+  <div class="sql-display">
+    <div class="card"><pre><span class="cm">-- Q8. Top 3 per category (window fn)</span>
+<span class="kw">WITH</span> item_counts <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> category, item_purchased,
+    <span class="fn">COUNT</span>(customer_id) <span class="kw">AS</span> total_orders,
+    <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (
+      <span class="kw">PARTITION BY</span> category
+      <span class="kw">ORDER BY COUNT</span>(customer_id) <span class="kw">DESC</span>
+    ) <span class="kw">AS</span> item_rank
+  <span class="kw">FROM</span> customer
+  <span class="kw">GROUP BY</span> category, item_purchased
+)
+<span class="kw">SELECT</span> item_rank, category,
+       item_purchased, total_orders
+<span class="kw">FROM</span> item_counts
+<span class="kw">WHERE</span> item_rank &lt;= 3;</pre></div>
+    <div class="card"><h3>Result (sample)</h3><table class="result-table"><thead><tr><th>rank</th><th>category</th><th>item</th><th>orders</th></tr></thead><tbody><tr><td>1</td><td>Clothing</td><td>Blouse</td><td>171</td></tr><tr><td>2</td><td>Clothing</td><td>Shirt</td><td>158</td></tr><tr><td>3</td><td>Clothing</td><td>Dress</td><td>155</td></tr><tr><td>1</td><td>Footwear</td><td>Sandals</td><td>148</td></tr><tr><td colspan="4" style="text-align:center;color:#57606a;">... all 4 categories</td></tr></tbody></table></div>
+  </div>
+</div>
+
+<!-- ══════════════ DATASET ══════════════ -->
+<div id="panel-data" class="panel">
+  <h2>Dataset Sample &mdash; customer_shopping_behavior.csv</h2>
+  <p style="color:#57606a;margin-bottom:16px;font-size:13px;">3,900 rows &middot; 18 columns &middot; First 8 rows shown</p>
+  <div class="data-table-wrap">
+    <table class="data-tbl">
+      <thead><tr><th>ID</th><th>Age</th><th>Gender</th><th>Item Purchased</th><th>Category</th><th>Amount (USD)</th><th>Location</th><th>Size</th><th>Season</th><th>Rating</th><th>Subscription</th><th>Shipping</th><th>Discount</th><th>Prev. Purchases</th><th>Payment</th><th>Frequency</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>55</td><td>Male</td><td>Blouse</td><td>Clothing</td><td>$53</td><td>Kentucky</td><td>L</td><td>Winter</td><td>3.1</td><td>Yes</td><td>Express</td><td>Yes</td><td>14</td><td>Venmo</td><td>Fortnightly</td></tr>
+        <tr><td>2</td><td>19</td><td>Male</td><td>Sweater</td><td>Clothing</td><td>$64</td><td>Maine</td><td>L</td><td>Winter</td><td>3.1</td><td>Yes</td><td>Express</td><td>Yes</td><td>2</td><td>Cash</td><td>Fortnightly</td></tr>
+        <tr><td>3</td><td>50</td><td>Male</td><td>Jeans</td><td>Clothing</td><td>$73</td><td>Massachusetts</td><td>S</td><td>Spring</td><td>3.1</td><td>Yes</td><td>Free Shipping</td><td>Yes</td><td>23</td><td>Credit Card</td><td>Weekly</td></tr>
+        <tr><td>4</td><td>21</td><td>Male</td><td>Sandals</td><td>Footwear</td><td>$90</td><td>Rhode Island</td><td>M</td><td>Spring</td><td>3.5</td><td>Yes</td><td>Next Day Air</td><td>Yes</td><td>49</td><td>PayPal</td><td>Weekly</td></tr>
+        <tr><td>5</td><td>45</td><td>Male</td><td>Blouse</td><td>Clothing</td><td>$49</td><td>Oregon</td><td>M</td><td>Spring</td><td>2.7</td><td>Yes</td><td>Free Shipping</td><td>Yes</td><td>31</td><td>PayPal</td><td>Annually</td></tr>
+        <tr><td>6</td><td>34</td><td>Male</td><td>Sneakers</td><td>Footwear</td><td>$55</td><td>Montana</td><td>XL</td><td>Fall</td><td>4.4</td><td>No</td><td>Standard</td><td>No</td><td>16</td><td>Cash</td><td>Every 3 Months</td></tr>
+        <tr><td>7</td><td>27</td><td>Male</td><td>Shirt</td><td>Clothing</td><td>$62</td><td>California</td><td>M</td><td>Fall</td><td>3.8</td><td>No</td><td>Standard</td><td>No</td><td>7</td><td>Debit Card</td><td>Quarterly</td></tr>
+        <tr><td>8</td><td>62</td><td>Female</td><td>Dress</td><td>Clothing</td><td>$84</td><td>Texas</td><td>L</td><td>Summer</td><td>5.0</td><td>Yes</td><td>Express</td><td>Yes</td><td>38</td><td>Credit Card</td><td>Weekly</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:16px;padding:12px;background:#eef2fb;border-radius:8px;font-size:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+    <div><strong>Avg Age:</strong> 44.1 yrs</div>
+    <div><strong>Avg Purchase:</strong> $59.76</div>
+    <div><strong>Avg Rating:</strong> 3.75 / 5</div>
+    <div><strong>Avg Prev Purchases:</strong> 25.4</div>
+  </div>
+</div>
+
+<footer>
+  <strong>Customer Shopping Behavior Analysis</strong> &middot; Python &middot; SQL &middot; Power BI &middot; 3,900 records &middot; 18 columns<br>
+  <span style="color:#b0b8c1;">Made with IBM Bob</span>
+</footer>
+
+<script>
+function showPanel(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  el.classList.add('active');
+}
+function showSlide(idx, btn) {
+  document.querySelectorAll('.slide-display').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.slide-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.slide-display')[idx].classList.add('active');
+  btn.classList.add('active');
+}
+function showSQL(idx, btn) {
+  document.querySelectorAll('.sql-display').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sql-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.sql-display')[idx].classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
